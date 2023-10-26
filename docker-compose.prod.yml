@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  indexer:
+    build:
+      context: .
+    command: init
+    environment:
+      MEILI_HOST_URL: "${MEILI_HOST_URL:-http://meilisearch:7700}"
+      MEILI_INDEX_UID: "${MEILI_INDEX_UID:-crates}"
+      MEILI_API_KEY: "${MEILI_MASTER_KEY-admin}"
+    restart: unless-stopped
+
+volumes:
+  meilisearch-data:

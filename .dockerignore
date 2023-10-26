@@ -1,0 +1,7 @@
+assets
+docs
+target
+.gitignore
+Dockerfile
+run.sh
+RustConfig

@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  meilisearch:
+    image: docker.io/getmeili/meilisearch:latest
+    restart: unless-stopped
+    volumes:
+      - meilisearch-data:/data.ms
+    environment:
+      MEILI_MASTER_KEY: "${MEILI_MASTER_KEY-admin}"
+      MEILI_LOG_LEVEL: "${MEILI_LOG_LEVEL-info}"
+    healthcheck:
+      test: ["CMD", "curl", "-s", "$MEILI_HOST_URL/health"]
+      retries: 10
+      timeout: 5s
+    ports:
+      - '$MEILI_HOST_PORT:7700'
+
+volumes:
+  meilisearch-data:
