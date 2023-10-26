@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md"]
+  pull_request:
+    paths-ignore: ["**.md"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+
+jobs:
+  check:
+    name: Check Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - run: rustup toolchain install stable --profile minimal
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Cargo Make
+        uses: davidB/rust-cargo-make@v1
+
+      - name: Register Problem Matchers
+        run: echo "::add-matcher::.github/matchers.json"
+
+      - name: Run Formatter
+        run: cargo make format-ci
+
+      - name: Run Clippy
+        run: cargo make lint-ci
+
+      - name: Build
+        run: cargo build --release --all-features
