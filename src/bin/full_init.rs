@@ -4,13 +4,13 @@ use color_eyre::eyre::{Context, Result};
 use futures::channel::mpsc;
 use futures::sink::SinkExt;
 use futures::stream::{self, StreamExt};
-use meili_crates::config::CONFIG;
 use meilisearch_sdk::{Client, Settings};
+use search_crates_pm::config::CONFIG;
 use tokio::fs;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use walkdir::WalkDir;
 
-use meili_crates::{
+use search_crates_pm::{
     chunk_complete_crates_info_to_meili, create_meilisearch_client, init_logging,
     retrieve_crate_toml, CrateInfo,
 };

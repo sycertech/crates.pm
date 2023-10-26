@@ -1,8 +1,9 @@
 [package]
-name = "meili-crates"
+name = "search-crates-pm"
 version = "0.1.0"
-authors = ["Clément Renault <renault.cle@gmail.com>"]
+authors = ["Carter Himmel <me@fyko.net>", "Clément Renault <renault.cle@gmail.com>"]
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 tokio = { version = "1", features = [

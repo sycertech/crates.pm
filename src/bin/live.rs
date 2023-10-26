@@ -6,7 +6,7 @@ use futures::sink::SinkExt;
 use futures::stream::{self, StreamExt};
 
 use color_eyre::Result;
-use meili_crates::{
+use search_crates_pm::{
     chunk_complete_crates_info_to_meili, create_meilisearch_client, init_logging,
     retrieve_crate_toml, CrateInfo,
 };

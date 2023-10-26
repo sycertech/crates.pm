@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 
 services:
   dozzle:
@@ -14,3 +14,6 @@ services:
       start_period: 30s
     ports:
       - 9999:8080
+
+  meilisearch:
+    depends_on: [dozzle]

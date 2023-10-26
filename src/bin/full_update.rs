@@ -7,7 +7,7 @@ use futures::stream::{self, StreamExt};
 use tar::Archive;
 
 use color_eyre::Result;
-use meili_crates::{
+use search_crates_pm::{
     chunk_downloads_crates_info_to_meili, create_meilisearch_client, init_logging,
     DownloadsCrateInfos,
 };
