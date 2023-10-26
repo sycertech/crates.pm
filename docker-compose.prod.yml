@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  indexer:
+  init:
     build:
       context: .
     command: init
@@ -9,7 +9,20 @@ services:
       MEILI_HOST_URL: "${MEILI_HOST_URL:-http://meilisearch:7700}"
       MEILI_INDEX_UID: "${MEILI_INDEX_UID:-crates}"
       MEILI_API_KEY: "${MEILI_MASTER_KEY-admin}"
+    restart: never
+
+  update:
+    build:
+      context: .
+    environment:
+      MEILI_HOST_URL: "${MEILI_HOST_URL:-http://meilisearch:7700}"
+      MEILI_INDEX_UID: "${MEILI_INDEX_UID:-crates}"
+      MEILI_API_KEY: "${MEILI_MASTER_KEY-admin}"
     restart: unless-stopped
 
+  meilisearch:
+    volumes:
+        - prod_meilisearch-data:/data.ms
+
 volumes:
-  meilisearch-data:
+  prod_meilisearch-data:

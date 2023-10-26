@@ -12,9 +12,13 @@ script = '''
     pre-commit install || echo "failed to install git hooks!" 1>&2
 '''
 
-[tasks.full-init]
+[tasks.run-init]
 command = "cargo"
-args = ["run", "--release", "--bin", "full_init"]
+args = ["run", "--release", "--bin", "init"]
+
+[tasks.run-update-downloads]
+command = "cargo"
+args = ["run", "--release", "--bin", "update_downloads"]
 
 [tasks.clone-index]
 command = "git"

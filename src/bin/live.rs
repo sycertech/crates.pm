@@ -7,10 +7,10 @@ use futures::stream::{self, StreamExt};
 
 use color_eyre::Result;
 use search_crates_pm::{
-    chunk_complete_crates_info_to_meili, create_meilisearch_client, init_logging,
-    retrieve_crate_toml, CrateInfo,
+    chunk_info_to_meili, create_meilisearch_client, init_logging, retrieve_crate_toml, CrateInfo,
 };
 
+#[tracing::instrument(skip_all)]
 async fn crates_infos(mut sender: mpsc::Sender<CrateInfo>) -> Result<()> {
     let body = reqwest::get("https://docs.rs/releases/feed")
         .await?
@@ -44,14 +44,13 @@ async fn crates_infos(mut sender: mpsc::Sender<CrateInfo>) -> Result<()> {
 async fn main() -> Result<()> {
     init_logging();
 
-    let (infos_sender, infos_receiver) = mpsc::channel(100);
-    let (cinfos_sender, cinfos_receiver) = mpsc::channel(100);
+    let (infos_sender, infos_receiver) = mpsc::channel(10_000);
+    let (cinfos_sender, cinfos_receiver) = mpsc::channel(10_000);
 
     let retrieve_handler = tokio::spawn(crates_infos(infos_sender));
 
     let client = create_meilisearch_client();
-    let publish_handler =
-        tokio::spawn(chunk_complete_crates_info_to_meili(client, cinfos_receiver));
+    let publish_handler = tokio::spawn(chunk_info_to_meili(client, cinfos_receiver));
 
     StreamExt::zip(infos_receiver, stream::repeat(cinfos_sender))
         .for_each_concurrent(Some(8), |(info, mut sender)| async move {

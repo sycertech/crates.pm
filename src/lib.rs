@@ -2,6 +2,7 @@ use color_eyre::{eyre::eyre, Result};
 use std::io::Read;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::task::JoinSet;
 
 use config::CONFIG;
 use flate2::bufread::GzDecoder;
@@ -39,6 +40,7 @@ pub struct DownloadsCrateInfos {
     downloads: u64,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn retrieve_crate_toml(info: &CrateInfo) -> Result<CompleteCrateInfos> {
     let url = format!(
         "https://static.crates.io/crates/{name}/{name}-{version}.crate",
@@ -63,7 +65,7 @@ pub async fn retrieve_crate_toml(info: &CrateInfo) -> Result<CompleteCrateInfos>
 
     let res = match result {
         Some(res) => res,
-        None => return Err(color_eyre::eyre::eyre!("Could not download {}", url)),
+        None => return Err(eyre!("Could not download {}", url)),
     };
 
     if !res.status().is_success() {
@@ -139,43 +141,56 @@ pub async fn retrieve_crate_toml(info: &CrateInfo) -> Result<CompleteCrateInfos>
     }
 }
 
-// something in here is causing a rucus
-pub async fn chunk_complete_crates_info_to_meili(
+#[tracing::instrument(skip_all)]
+pub async fn chunk_info_to_meili<T: Serialize + Send + Sync + 'static>(
     client: Arc<Client>,
-    receiver: mpsc::Receiver<CompleteCrateInfos>,
+    receiver: mpsc::Receiver<T>,
 ) -> Result<()> {
     let index = client.index(CONFIG.meili_index_uid.clone());
 
+    let mut js = JoinSet::new();
+
     let mut chunk_count = 0;
-    let mut receiver = receiver.chunks(100);
-    while let Some(chunk) = StreamExt::next(&mut receiver).await {
+    let mut receiver = receiver.chunks(250);
+    while let Some(chunk) = receiver.next().await {
         tracing::debug!("chunk {chunk_count} len: {}", chunk.len());
         chunk_count += 1;
 
-        let task = index.add_or_update(&chunk, Some("name")).await?;
-        let res = client.wait_for_task(task, None, None).await?;
-        tracing::debug!("{res:#?}");
+        let index = index.clone();
+        let client = client.clone();
+        js.spawn(async move {
+            let task = match index.add_or_update(&chunk, Some("name")).await {
+                Ok(task) => task,
+                Err(e) => {
+                    tracing::error!("error adding chunk to meili: {}", e);
+                    return;
+                }
+            };
+            let task_id = task.task_uid;
+            tracing::debug!("sending chunk {chunk_count} (task: {task_id}) {task:?}");
+
+            match client
+                .wait_for_task(task, None, Some(Duration::from_secs(120)))
+                .await
+            {
+                Ok(res) => res,
+                Err(e) => {
+                    tracing::warn!("error waiting for task: {}", e);
+                    return;
+                }
+            };
+            tracing::debug!("task for chunk {chunk_count} passed (task: {task_id})");
+        });
     }
+
+    tracing::info!("waiting for meili to finish {} tasks", js.len());
+    while (js.join_next().await).is_some() {}
 
     Ok(())
 }
 
-pub async fn chunk_downloads_crates_info_to_meili(
-    client: Arc<Client>,
-    receiver: mpsc::Receiver<DownloadsCrateInfos>,
-) -> Result<()> {
-    let index = client.index(CONFIG.meili_index_uid.clone());
-
-    let mut receiver = receiver.chunks(150);
-    while let Some(chunk) = StreamExt::next(&mut receiver).await {
-        let task = index.add_or_update(&chunk, Some("name")).await?;
-        let res = client.wait_for_task(task, None, None).await?;
-        tracing::info!("{res:#?}");
-    }
-
-    Ok(())
-}
-
+/// Create a meilisearch client
+#[tracing::instrument(skip_all)]
 pub fn create_meilisearch_client() -> Arc<Client> {
     Arc::new(Client::new(
         CONFIG.meili_host_url.clone(),
@@ -183,6 +198,8 @@ pub fn create_meilisearch_client() -> Arc<Client> {
     ))
 }
 
+/// Initialize logging for the application
+#[tracing::instrument(skip_all)]
 pub fn init_logging() {
     color_eyre::install().expect("failed to install color_eyre");
 

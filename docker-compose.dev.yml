@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
   dozzle:
-    container_name: dozzle
     image: docker.io/amir20/dozzle:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -17,3 +16,8 @@ services:
 
   meilisearch:
     depends_on: [dozzle]
+    volumes:
+        - dev_meilisearch-data:/data.ms
+
+volumes:
+  dev_meilisearch-data:

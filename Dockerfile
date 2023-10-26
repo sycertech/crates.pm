@@ -21,10 +21,12 @@ RUN apt-get update \
  && apt-get install -y cron git \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
+RUN touch /var/log/cron.log
 
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/full_init .
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/init .
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/live .
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/update_downloads .
 
 ENTRYPOINT ["/app/entrypoint.sh"]

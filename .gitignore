@@ -2,3 +2,5 @@ target
 docs
 assets
 crates.io-index
+db-dump.tar.gz
+2023-*

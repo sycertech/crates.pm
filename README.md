@@ -34,3 +34,11 @@ makers clone-index
 ```console
 makers full-init
 ```
+
+## Incremental Updates
+In production, two tasks are run periodically:
+
+|Task|Frequency|Description|
+|---|---|---|
+|[`update_downloads`](./src/bin/update_downloads.rs)|Daily @ 2:30am UTC|Downloads the crates-io database dump to update downloads.|
+|[`live`](./src/bin/live.rs)|Every 10 minutes|Reads the docs.rs RSS feed and updates the index.|

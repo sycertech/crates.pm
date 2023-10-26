@@ -1,6 +1,8 @@
 use std::path::Path;
+use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
-use color_eyre::eyre::{Context, Result};
+use color_eyre::eyre::Result;
 use futures::channel::mpsc;
 use futures::sink::SinkExt;
 use futures::stream::{self, StreamExt};
@@ -11,10 +13,10 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use walkdir::WalkDir;
 
 use search_crates_pm::{
-    chunk_complete_crates_info_to_meili, create_meilisearch_client, init_logging,
-    retrieve_crate_toml, CrateInfo,
+    chunk_info_to_meili, create_meilisearch_client, init_logging, retrieve_crate_toml, CrateInfo,
 };
 
+#[tracing::instrument]
 async fn process_file(entry: walkdir::DirEntry) -> Result<Option<CrateInfo>> {
     if entry.file_type().is_file() {
         let file = fs::File::open(entry.path()).await?;
@@ -42,14 +44,14 @@ async fn process_file(entry: walkdir::DirEntry) -> Result<Option<CrateInfo>> {
     Ok(None)
 }
 
+#[tracing::instrument(skip_all)]
 async fn crates_infos<P: AsRef<Path>>(
     mut sender: mpsc::Sender<CrateInfo>,
     crates_io_index: P,
 ) -> Result<()> {
-    let walkdir = WalkDir::new(crates_io_index)
-        .max_open(1)
-        .contents_first(true);
+    let walkdir = WalkDir::new(crates_io_index).contents_first(true);
 
+    let count = Arc::new(AtomicUsize::new(0));
     for result in walkdir {
         let entry = match result {
             Ok(entry) => entry,
@@ -59,21 +61,35 @@ async fn crates_infos<P: AsRef<Path>>(
             }
         };
 
-        match process_file(entry).await {
-            Ok(Some(info)) => {
-                tracing::info!(name = info.name, version = info.vers, "found crate");
-                if let Err(e) = sender.send(info).await {
-                    tracing::error!("failed to send crate info: {:#?}", e);
+        let count = count.clone();
+        let mut sender = sender.clone();
+        tokio::spawn(async move {
+            match process_file(entry).await {
+                Ok(Some(info)) => {
+                    let i = count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
+                    tracing::debug!(
+                        name = info.name,
+                        version = info.vers,
+                        count = i + 1,
+                        "sending crate"
+                    );
+                    if let Err(e) = sender.send(info).await {
+                        tracing::error!("failed to send crate info: {:#?}", e);
+                    }
                 }
+                Ok(None) => (),
+                Err(e) => tracing::error!("error when processing file: {}", e),
             }
-            Ok(None) => (),
-            Err(e) => tracing::error!("error when processing file: {}", e),
-        }
+        });
     }
+
+    sender.flush().await?;
 
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 async fn init_index(client: &Client) -> Result<()> {
     let task = client
         .create_index(CONFIG.meili_index_uid.clone(), Some("name"))
@@ -85,18 +101,11 @@ async fn init_index(client: &Client) -> Result<()> {
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 async fn init_settings(client: &Client) -> Result<()> {
     let index = client.index(CONFIG.meili_index_uid.clone());
 
     let settings = Settings {
-        ranking_rules: Some(vec![
-            "typo".to_string(),
-            "words".to_string(),
-            "proximity".to_string(),
-            "attribute".to_string(),
-            "sort".to_string(),
-            "exactness".to_string(),
-        ]),
         searchable_attributes: Some(vec![
             "name".to_string(),
             "description".to_string(),
@@ -104,15 +113,7 @@ async fn init_settings(client: &Client) -> Result<()> {
             "categories".to_string(),
             "readme".to_string(),
         ]),
-        displayed_attributes: Some(vec![
-            "name".to_string(),
-            "description".to_string(),
-            "keywords".to_string(),
-            "categories".to_string(),
-            "readme".to_string(),
-            "version".to_string(),
-            "downloads".to_string(),
-        ]),
+        sortable_attributes: Some(vec!["downloads".to_string()]),
         ..Default::default()
     };
 
@@ -141,16 +142,16 @@ async fn main() -> Result<()> {
 
     let retrieve_handler = tokio::spawn(crates_infos(infos_sender, "crates.io-index/"));
 
-    let publish_handler = tokio::spawn(chunk_complete_crates_info_to_meili(
-        client.clone(),
-        cinfos_receiver,
-    ));
+    let publish_handler = tokio::spawn(chunk_info_to_meili(client.clone(), cinfos_receiver));
 
     let retrieve_toml = StreamExt::zip(infos_receiver, stream::repeat(cinfos_sender))
-        .for_each_concurrent(Some(128), |(info, mut sender)| async move {
+        .for_each_concurrent(Some(250), |(info, mut sender)| async move {
             let _ = tokio::spawn(async move {
                 match retrieve_crate_toml(&info).await {
-                    Ok(cinfo) => sender.send(cinfo).await.context("send crate info").unwrap(),
+                    Ok(cinfo) => match sender.send(cinfo).await {
+                        Ok(_) => (),
+                        Err(e) => tracing::error!("failed to send crate info: {:#?}", e),
+                    },
                     Err(e) => tracing::error!("{:?} {}", info, e),
                 }
             })

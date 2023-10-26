@@ -1,11 +1,8 @@
+use color_eyre::eyre::Result;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().expect("Unable to retrieve config"));
-
-pub const MEILI_HOST_URL: &str = "MEILI_HOST_URL";
-pub const MEILI_INDEX_UID: &str = "MEILI_INDEX_UID";
-pub const MEILI_API_KEY: &str = "MEILI_API_KEY";
 
 /// Application Config
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -20,7 +17,7 @@ pub struct Config {
 
 impl Config {
     /// Create a new `Config`
-    pub fn new() -> anyhow::Result<Self> {
+    pub fn new() -> Result<Self> {
         let config = envy::from_env::<Self>()?;
 
         Ok(config)

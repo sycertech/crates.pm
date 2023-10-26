@@ -8,10 +8,10 @@ use tar::Archive;
 
 use color_eyre::Result;
 use search_crates_pm::{
-    chunk_downloads_crates_info_to_meili, create_meilisearch_client, init_logging,
-    DownloadsCrateInfos,
+    chunk_info_to_meili, create_meilisearch_client, init_logging, DownloadsCrateInfos,
 };
 
+#[tracing::instrument]
 async fn crates_downloads_infos() -> Result<Vec<DownloadsCrateInfos>> {
     let body = reqwest::get("https://static.crates.io/db-dump.tar.gz")
         .await?
@@ -54,10 +54,7 @@ async fn main() -> Result<()> {
     let downloads_infos = stream::iter(crates_downloads_infos().await?);
 
     let client = create_meilisearch_client();
-    let publish_handler = tokio::spawn(chunk_downloads_crates_info_to_meili(
-        client,
-        cinfos_receiver,
-    ));
+    let publish_handler = tokio::spawn(chunk_info_to_meili(client, cinfos_receiver));
 
     StreamExt::zip(downloads_infos, stream::repeat(cinfos_sender))
         .for_each_concurrent(Some(8), |(info, mut sender)| async move {
