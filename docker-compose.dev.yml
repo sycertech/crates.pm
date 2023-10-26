@@ -6,5 +6,11 @@ services:
     image: docker.io/amir20/dozzle:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: [ "CMD", "/dozzle", "healthcheck" ]
+      interval: 3s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     ports:
       - 9999:8080

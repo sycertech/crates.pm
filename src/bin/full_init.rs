@@ -131,8 +131,8 @@ async fn init_settings(client: &Client) -> Result<()> {
 async fn main() -> Result<()> {
     init_logging();
 
-    let (infos_sender, infos_receiver) = mpsc::channel(1000);
-    let (cinfos_sender, cinfos_receiver) = mpsc::channel(1000);
+    let (infos_sender, infos_receiver) = mpsc::channel(10_000);
+    let (cinfos_sender, cinfos_receiver) = mpsc::channel(10_000);
 
     let client = create_meilisearch_client();
 

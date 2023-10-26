@@ -15,7 +15,7 @@ cargo binstall cargo-make
 Start Meilisearch with:
 
 ```console
-./y.sh dev up
+./y.sh dev up --wait
 ```
 
 This will also start an instance of [`dozzle`](https://github.com/amir20/dozzle), which is at http://localhost:9999.
