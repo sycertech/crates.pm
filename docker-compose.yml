@@ -5,12 +5,14 @@ services:
     image: docker.io/getmeili/meilisearch:latest
     restart: unless-stopped
     environment:
+      MEILI_ENVIRONMENT: "development"
       MEILI_MASTER_KEY: "${MEILI_MASTER_KEY-admin}"
       MEILI_LOG_LEVEL: "${MEILI_LOG_LEVEL-info}"
       RUST_LOG: "${MEILI_RUST_LOG-info}"
     healthcheck:
       test: ["CMD", "curl", "-s", "$MEILI_HOST_URL/health"]
       retries: 10
+      interval: 5s
       timeout: 5s
     ports:
       - '$MEILI_HOST_PORT:7700'

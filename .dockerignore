@@ -1,7 +1,16 @@
+.git
+.github
+2023-*
 assets
 docs
 target
+.envrc
 .gitignore
 Dockerfile
 run.sh
+Makefile.toml
+y.*
 RustConfig
+.pre-commit-config.yaml
+db-dump.tar.gz
+docker-compose*

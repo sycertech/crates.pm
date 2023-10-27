@@ -2,7 +2,8 @@ version: "3.9"
 
 services:
   init:
-    image: ghcr.io/sycertech/search.crates.pm:latest
+    build:
+      context: .
     command: init
     environment:
       MEILI_HOST_URL: "${MEILI_HOST_URL:-http://meilisearch:7700}"
@@ -12,7 +13,8 @@ services:
     restart: no
 
   update:
-    image: ghcr.io/sycertech/search.crates.pm:latest
+    build:
+      context: .
     environment:
       MEILI_HOST_URL: "${MEILI_HOST_URL:-http://meilisearch:7700}"
       MEILI_INDEX_UID: "${MEILI_INDEX_UID:-crates}"
@@ -22,10 +24,10 @@ services:
 
   meilisearch:
     volumes:
-      - prod_meilisearch-data:/data.ms
+      - integrate_meilisearch-data:/data.ms
     environment:
       MEILI_ENVIRONMENT: "production"
       MEILI_MASTER_KEY: "${MEILI_MASTER_KEY}"
 
 volumes:
-  prod_meilisearch-data:
+  integrate_meilisearch-data:

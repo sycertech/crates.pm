@@ -17,6 +17,7 @@ use tar::Archive;
 
 pub mod backoff;
 pub mod config;
+pub mod functions;
 
 #[derive(Debug, Deserialize)]
 pub struct CrateInfo {
@@ -170,7 +171,7 @@ pub async fn chunk_info_to_meili<T: Serialize + Send + Sync + 'static>(
             tracing::debug!("sending chunk {chunk_count} (task: {task_id}) {task:?}");
 
             match client
-                .wait_for_task(task, None, Some(Duration::from_secs(120)))
+                .wait_for_task(task, None, Some(Duration::from_secs(60 * 5)))
                 .await
             {
                 Ok(res) => res,
@@ -196,20 +197,4 @@ pub fn create_meilisearch_client() -> Arc<Client> {
         CONFIG.meili_host_url.clone(),
         Some(CONFIG.meili_api_key.clone()),
     ))
-}
-
-/// Initialize logging for the application
-#[tracing::instrument(skip_all)]
-pub fn init_logging() {
-    color_eyre::install().expect("failed to install color_eyre");
-
-    use tracing_subscriber::{fmt, prelude::*, EnvFilter, Registry};
-
-    Registry::default()
-        .with(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,html5ever=info,isahc=info".into()),
-        )
-        .with(fmt::layer())
-        .init();
 }

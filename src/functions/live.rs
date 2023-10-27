@@ -1,14 +1,38 @@
 use std::io::BufReader;
+use std::sync::Arc;
 
 use atom_syndication::Feed;
 use futures::channel::mpsc;
 use futures::sink::SinkExt;
 use futures::stream::{self, StreamExt};
 
+use crate::{chunk_info_to_meili, retrieve_crate_toml, CrateInfo};
 use color_eyre::Result;
-use search_crates_pm::{
-    chunk_info_to_meili, create_meilisearch_client, init_logging, retrieve_crate_toml, CrateInfo,
-};
+use meilisearch_sdk::Client;
+
+#[tracing::instrument]
+pub async fn live(client: Arc<Client>) -> Result<()> {
+    let (infos_sender, infos_receiver) = mpsc::channel(10_000);
+    let (cinfos_sender, cinfos_receiver) = mpsc::channel(10_000);
+
+    let retrieve_handler = tokio::spawn(crates_infos(infos_sender));
+
+    let publish_handler = tokio::spawn(chunk_info_to_meili(client, cinfos_receiver));
+
+    StreamExt::zip(infos_receiver, stream::repeat(cinfos_sender))
+        .for_each_concurrent(Some(8), |(info, mut sender)| async move {
+            match retrieve_crate_toml(&info).await {
+                Ok(cinfo) => sender.send(cinfo).await.unwrap(),
+                Err(e) => tracing::info!("{:?} {}", info, e),
+            }
+        })
+        .await;
+
+    retrieve_handler.await??;
+    publish_handler.await??;
+
+    Ok(())
+}
 
 #[tracing::instrument(skip_all)]
 async fn crates_infos(mut sender: mpsc::Sender<CrateInfo>) -> Result<()> {
@@ -36,33 +60,6 @@ async fn crates_infos(mut sender: mpsc::Sender<CrateInfo>) -> Result<()> {
             tracing::info!("{}", e);
         }
     }
-
-    Ok(())
-}
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    init_logging();
-
-    let (infos_sender, infos_receiver) = mpsc::channel(10_000);
-    let (cinfos_sender, cinfos_receiver) = mpsc::channel(10_000);
-
-    let retrieve_handler = tokio::spawn(crates_infos(infos_sender));
-
-    let client = create_meilisearch_client();
-    let publish_handler = tokio::spawn(chunk_info_to_meili(client, cinfos_receiver));
-
-    StreamExt::zip(infos_receiver, stream::repeat(cinfos_sender))
-        .for_each_concurrent(Some(8), |(info, mut sender)| async move {
-            match retrieve_crate_toml(&info).await {
-                Ok(cinfo) => sender.send(cinfo).await.unwrap(),
-                Err(e) => tracing::info!("{:?} {}", info, e),
-            }
-        })
-        .await;
-
-    retrieve_handler.await??;
-    publish_handler.await??;
 
     Ok(())
 }

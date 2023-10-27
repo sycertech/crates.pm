@@ -2,19 +2,49 @@ use std::path::Path;
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 
+use crate::config::CONFIG;
 use color_eyre::eyre::Result;
 use futures::channel::mpsc;
 use futures::sink::SinkExt;
 use futures::stream::{self, StreamExt};
 use meilisearch_sdk::{Client, Settings};
-use search_crates_pm::config::CONFIG;
 use tokio::fs;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use walkdir::WalkDir;
 
-use search_crates_pm::{
-    chunk_info_to_meili, create_meilisearch_client, init_logging, retrieve_crate_toml, CrateInfo,
-};
+use crate::{chunk_info_to_meili, retrieve_crate_toml, CrateInfo};
+
+pub async fn init(client: Arc<Client>) -> Result<()> {
+    let (infos_sender, infos_receiver) = mpsc::channel(10_000);
+    let (cinfos_sender, cinfos_receiver) = mpsc::channel(10_000);
+
+    init_index(&client).await?;
+    init_settings(&client).await?;
+
+    let retrieve_handler = tokio::spawn(crates_infos(infos_sender, "crates.io-index/"));
+
+    let publish_handler = tokio::spawn(chunk_info_to_meili(client.clone(), cinfos_receiver));
+
+    let retrieve_toml = StreamExt::zip(infos_receiver, stream::repeat(cinfos_sender))
+        .for_each_concurrent(Some(250), |(info, mut sender)| async move {
+            let _ = tokio::spawn(async move {
+                match retrieve_crate_toml(&info).await {
+                    Ok(cinfo) => match sender.send(cinfo).await {
+                        Ok(_) => (),
+                        Err(e) => tracing::error!("failed to send crate info: {:#?}", e),
+                    },
+                    Err(e) => tracing::error!("{:?} {}", info, e),
+                }
+            })
+            .await;
+        });
+
+    retrieve_toml.await;
+    retrieve_handler.await??;
+    publish_handler.await??;
+
+    Ok(())
+}
 
 #[tracing::instrument]
 async fn process_file(entry: walkdir::DirEntry) -> Result<Option<CrateInfo>> {
@@ -79,7 +109,7 @@ async fn crates_infos<P: AsRef<Path>>(
                     }
                 }
                 Ok(None) => (),
-                Err(e) => tracing::error!("error when processing file: {}", e),
+                Err(e) => tracing::warn!("error when processing file: {}", e),
             }
         });
     }
@@ -121,46 +151,6 @@ async fn init_settings(client: &Client) -> Result<()> {
     let res = client.wait_for_task(task, None, None).await?;
 
     tracing::info!("{res:#?}");
-
-    Ok(())
-}
-
-// git clone --depth=1 https://github.com/rust-lang/crates.io-index.git
-// https://static.crates.io/crates/{crate}/{crate}-{version}.crate
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    init_logging();
-
-    let (infos_sender, infos_receiver) = mpsc::channel(10_000);
-    let (cinfos_sender, cinfos_receiver) = mpsc::channel(10_000);
-
-    let client = create_meilisearch_client();
-
-    init_index(&client).await?;
-    init_settings(&client).await?;
-
-    let retrieve_handler = tokio::spawn(crates_infos(infos_sender, "crates.io-index/"));
-
-    let publish_handler = tokio::spawn(chunk_info_to_meili(client.clone(), cinfos_receiver));
-
-    let retrieve_toml = StreamExt::zip(infos_receiver, stream::repeat(cinfos_sender))
-        .for_each_concurrent(Some(250), |(info, mut sender)| async move {
-            let _ = tokio::spawn(async move {
-                match retrieve_crate_toml(&info).await {
-                    Ok(cinfo) => match sender.send(cinfo).await {
-                        Ok(_) => (),
-                        Err(e) => tracing::error!("failed to send crate info: {:#?}", e),
-                    },
-                    Err(e) => tracing::error!("{:?} {}", info, e),
-                }
-            })
-            .await;
-        });
-
-    retrieve_toml.await;
-    retrieve_handler.await??;
-    publish_handler.await??;
 
     Ok(())
 }
