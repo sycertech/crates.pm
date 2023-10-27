@@ -14,3 +14,5 @@ RustConfig
 .pre-commit-config.yaml
 db-dump.tar.gz
 docker-compose*
+node_modules
+dist

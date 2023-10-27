@@ -16,7 +16,7 @@ export const Header = observer(function Header({state$}: {state$: AppState}) {
 					<br />
 					<br />
 					Meilisearch endpoint:{' '}
-					<a href="https://search.crates.pm/api/meili/health">https://search.crates.pm/api/meili</a>
+					<a href="https://crates.pm/api/meili/health">https://crates.pm/api/meili</a>
 					<br />
 					API Key: <code>42c23e43c9529fd1f1e47f4eb4d428b571f18e099d32091cc85b8546bb9d1be7</code>
 					<br />

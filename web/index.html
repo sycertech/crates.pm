@@ -6,12 +6,30 @@
 	<link rel="icon" type="image/png" href="/cargo.png" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=JetBrains+Mono" />
+
+	<meta name="og:title" content="crates.pm">
+	<meta name="og:type" content="website" />
+	<meta name="og:description" content="A search engine for Crates">
+	<meta name="og:image" content="/cargo.png">
+	<meta name="og:url" content="/" />
+	<meta name="og:locale" content="en_US" />
+	<meta name="og:locale:alternate" content="en_GB" />
+
+	<meta name="twitter:site" content="@fykowo" />
+	<meta name="twitter:creator" content="@fykowo" />
+	<meta name="twitter:title" content="crates.pm" />
+	<meta name="twitter:description" content="A search engine for Crates" />
+	<meta name="twitter:image" content="/cargo.png" />
+	<meta name="twitter:url" content="/" />
+
+	<meta name="theme-color" content="#dfa83e">
+
 	<title>crates.pm</title>
 </head>
 
 <body>
-	<div id="root"></div>
-	<script type="module" src="/src/main.tsx"></script>
+	<div id="app"><!--app-html--></div>
+	<script type="module" src="/src/entry-client.tsx"></script>
 </body>
 
 </html>
