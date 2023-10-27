@@ -1,8 +1,11 @@
-# search.crates.pm
-A crates.io indexer for Meilisearch based on [their demos](https://github.com/meilisearch/demos)
+# crates.pm
+
+A crates.io indexer for Meilisearch
 
 ## Usage
+
 ### Prerequisites
+
 - Ensure validity of `.envrc`.
 - Install [`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall#installation)
 - Install [`cargo-make`](https://github.com/sagiegurari/cargo-make)
@@ -12,6 +15,7 @@ cargo binstall cargo-make
 ```
 
 ### Services
+
 Start Meilisearch with:
 
 ```console
@@ -22,27 +26,41 @@ This will also start an instance of [`dozzle`](https://github.com/amir20/dozzle)
 You can also open Meilisearch at http://localhost:7700.
 
 ## Initial Run: Loading All Crates
+
 For the first load, we use the crates.io-index.
 
-1. Clone [`rust-lang/crates.io-index`](https://github.com/rust-lang/crates.io-index )
+1. Clone [`rust-lang/crates.io-index`](https://github.com/rust-lang/crates.io-index)
 
 ```console
 makers clone-index
 ```
 
 2. Run [`init`](./src/functions/init.rs)
+
 ```console
 makers run-init
 ```
 
 ## Incremental Updates
+
 In production, two tasks are run periodically:
 
-|Task|Frequency|Description|
-|---|---|---|
-|[`update_downloads`](./src/functions/update_downloads.rs)|Daily @ 2:30am UTC|Downloads the crates-io database dump to update downloads.|
-|[`live`](./src/functions/live.rs)|Every 10 minutes|Reads the docs.rs RSS feed and updates the index.|
+| Task                                                      | Frequency          | Description                                                |
+| --------------------------------------------------------- | ------------------ | ---------------------------------------------------------- |
+| [`update_downloads`](./src/functions/update_downloads.rs) | Daily @ 2:30am UTC | Downloads the crates-io database dump to update downloads. |
+| [`live`](./src/functions/live.rs)                         | Every 10 minutes   | Reads the docs.rs RSS feed and updates the index.          |
 
 ```console
 makers run update
 ```
+
+## Frontend
+
+1. Search-and-replace API keys and Meilisearch URL
+2. Install dependencies with `yarn`
+3. Start development server with `yarn dev`
+4. Cash Money
+
+## Credits
+
+This project is based on https://github.com/meilisearch/demos.
