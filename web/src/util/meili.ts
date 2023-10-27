@@ -1,6 +1,6 @@
 import {AppState} from '../App';
 
-const url = 'https://search.crates.pm/api/meili';
+const url = 'https://crates.pm/api/meili';
 const indexUID = 'crates';
 const apiKey = 'dfe530c6fd7ff313236262c15ce2b9f23d680fc2aabe7ee61d2492f4a0a9d17e';
 
