@@ -1,0 +1,22 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "node": true
+    },
+    "extends": [
+        "neon/common",
+        "neon/browser",
+        "neon/node",
+        "neon/typescript",
+        "neon/react",
+        "neon/prettier",
+        "neon/jsx-a11y"
+    ],
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "rules": {
+        "object-curly-spacing": "error"
+    }
+}

@@ -26,6 +26,9 @@ pub enum Command {
 
     /// Runs update tasks on a schedule
     Run,
+
+    /// Updates the download count for all crates
+    UpdateDownloads,
 }
 
 #[tokio::main]
@@ -44,6 +47,7 @@ async fn main() -> Result<()> {
 
     match Opt::parse().command {
         Some(Command::Init) => init(client).await,
+        Some(Command::UpdateDownloads) => update_downloads(client).await,
         _ => run(client).await,
     }
 }
@@ -55,6 +59,7 @@ async fn run(client: Arc<Client>) -> Result<()> {
     scheduler.every(1.day()).at("2:30 AM").run(move || {
         let client = client_clone.clone();
         async move {
+            tracing::info!("Running update downloads");
             update_downloads(client).await.unwrap();
         }
     });
@@ -63,6 +68,7 @@ async fn run(client: Arc<Client>) -> Result<()> {
     scheduler.every(10.minutes()).run(move || {
         let client = client_clone.clone();
         async move {
+            tracing::info!("Running live update");
             live(client).await.unwrap();
         }
     });
