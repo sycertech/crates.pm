@@ -14,11 +14,11 @@ script = '''
 
 [tasks.run-init]
 command = "cargo"
-args = ["run", "--release", "--bin", "init"]
+args = ["run", "--release", "--", "init"]
 
-[tasks.run-update-downloads]
+[tasks.run-update]
 command = "cargo"
-args = ["run", "--release", "--bin", "update_downloads"]
+args = ["run", "--release"]
 
 [tasks.clone-index]
 command = "git"

@@ -30,9 +30,9 @@ For the first load, we use the crates.io-index.
 makers clone-index
 ```
 
-2. Run [`full_init`](./src/bin/full_init.rs)
+2. Run [`init`](./src/functions/init.rs)
 ```console
-makers full-init
+makers run-init
 ```
 
 ## Incremental Updates
@@ -40,5 +40,9 @@ In production, two tasks are run periodically:
 
 |Task|Frequency|Description|
 |---|---|---|
-|[`update_downloads`](./src/bin/update_downloads.rs)|Daily @ 2:30am UTC|Downloads the crates-io database dump to update downloads.|
-|[`live`](./src/bin/live.rs)|Every 10 minutes|Reads the docs.rs RSS feed and updates the index.|
+|[`update_downloads`](./src/functions/update_downloads.rs)|Daily @ 2:30am UTC|Downloads the crates-io database dump to update downloads.|
+|[`live`](./src/functions/live.rs)|Every 10 minutes|Reads the docs.rs RSS feed and updates the index.|
+
+```console
+makers run update
+```
