@@ -4,6 +4,7 @@ import {useObservable} from '@legendapp/state/react';
 import {performSearch} from '../util/search';
 import {Header} from '../components/Header';
 import {Main} from '../components/Main';
+import {useEffect} from 'react';
 
 export type InnerAppState = {
 	hits: CrateHit[];
@@ -19,8 +20,11 @@ export function Home() {
 		requestTime: '',
 		count: 0,
 	});
-	performSearch(state$, '');
-	fetchCrateCount(state$);
+
+	useEffect(() => {
+		fetchCrateCount(state$);
+		performSearch(state$, '');
+	});
 
 	return (
 		<>
