@@ -45,6 +45,6 @@ jobs:
       - name: Releasing assets
         uses: actions/upload-artifact@v3
         with:
-          path: web*.tar.gz
+          path: web/web*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
