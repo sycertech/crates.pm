@@ -25,7 +25,7 @@ export const Header = observer(({ state$ }: { state$: AppState }) => {
 		};
 
 		void health();
-	});
+	}, []);
 
 	return (
 		<header id="serp">
