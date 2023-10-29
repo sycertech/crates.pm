@@ -1,9 +1,11 @@
-name: Continuous Deployment
+name: Indexer
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "!web/**"
   workflow_dispatch:
 
 env:

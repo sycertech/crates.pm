@@ -15,19 +15,6 @@ html {
 	padding: 0;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5 {
-	font-family: 'JetBrains Mono', ubuntu, roboto, '-apple-system', 'trebuchet ms', sans-serif;
-}
-
-#package .desc,
-#package h2 {
-	font-family: 'JetBrains Mono', ubuntu, roboto, '-apple-system', helvetica, sans-serif;
-}
-
 header {
 	padding: 1em 0 0;
 }
@@ -55,6 +42,7 @@ header {
 
 #search > input {
 	-webkit-appearance: none;
+	appearance: none;
 	outline: 0;
 	-webkit-transition: color 0.3s ease-in;
 	transition: color 0.3s ease-in;

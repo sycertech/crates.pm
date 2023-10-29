@@ -1,26 +1,27 @@
-import {CrateHit} from '../util/meili';
+import type { CrateHit } from '../util/meili';
 
-interface CrateProps {
-	hit: CrateHit;
-}
+type CrateProps = {
+	readonly hit: CrateHit;
+};
 
-const beautify = (n: number) => {
-	const exponent = (Math.log10(n) / 3) | 0;
+const beautify = (number: number) => {
+	const exponent = Math.trunc(Math.log10(number) / 3);
 	const suffixes = ['', 'K', 'M', 'B', 'T'];
 
+	// eslint-disable-next-line eqeqeq
 	if (exponent == 0) {
-		return n;
+		return number;
 	}
 
-	const divisor = Math.pow(10, exponent * 3);
-	const shortened = n / divisor;
+	const divisor = 10 ** (exponent * 3);
+	const shortened = number / divisor;
 	const rounded = Number(shortened.toFixed(1));
-	const suffix = suffixes[exponent];
+	const suffix = suffixes[exponent] ?? '';
 
 	return rounded + suffix;
 };
 
-export function Crate({hit}: CrateProps) {
+export function Crate({ hit }: CrateProps) {
 	return (
 		<li key={hit.name}>
 			<a href={`https://crates.pm/${hit.name}`}>
@@ -40,10 +41,10 @@ export function Crate({hit}: CrateProps) {
 					) : (
 						<></>
 					)}
-					{hit.keywords?.map(k => (
+					{hit.keywords?.map((keyword) => (
 						<span className="k">
 							<span>#</span>
-							{k}
+							{keyword}
 						</span>
 					))}
 				</div>

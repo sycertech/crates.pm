@@ -4,3 +4,5 @@ assets
 crates.io-index
 db-dump.tar.gz
 2023-*
+.next
+node_modules

@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Next: Node",
+            "cwd": "${workspaceFolder}/web",
+            "runtimeExecutable": "${workspaceFolder}/web/node_modules/.bin/next"
+        }
+    ]
+}

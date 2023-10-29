@@ -1,31 +1,44 @@
 {
     "compilerOptions": {
-        "allowImportingTsExtensions": true,
-        "isolatedModules": true,
-        "jsx": "react-jsx",
         "lib": [
-            "ES2020",
-            "DOM",
-            "DOM.Iterable"
+            "dom",
+            "dom.iterable",
+            "esnext"
         ],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true,
+        "incremental": true,
+        "esModuleInterop": true,
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "noEmit": true,
+        "resolveJsonModule": true,
+        "jsx": "preserve",
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ],
+        "target": "ESNext",
+        "useUnknownInCatchVariables": true,
+        "noImplicitOverride": true,
         "noFallthroughCasesInSwitch": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "resolveJsonModule": true,
-        "skipLibCheck": true,
-        "strict": true,
-        "target": "ES2020",
-        "useDefineForClassFields": true
+        "exactOptionalPropertyTypes": true,
+        "noImplicitReturns": true,
+        "noUncheckedIndexedAccess": true,
+        "isolatedModules": true
     },
     "include": [
-        "src"
+        "next-env.d.ts",
+        ".next/types/**/*.ts",
+        "**/*.ts",
+        "**/*.tsx"
     ],
-    "references": [
-        {
-            "path": "./tsconfig.node.json"
-        }
+    "exclude": [
+        "node_modules"
     ]
 }

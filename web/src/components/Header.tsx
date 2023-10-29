@@ -1,14 +1,38 @@
-import {observer} from '@legendapp/state/react';
-import {AppState} from '../App';
-import {performSearch} from '../util/search';
+import { observer } from '@legendapp/state/react';
+import { useEffect, useState } from 'react';
+import { performSearch } from '../util/search';
+import type { AppState } from '../util/state';
 
-export const Header = observer(function Header({state$}: {state$: AppState}) {
+export const Header = observer(({ state$ }: { state$: AppState }) => {
+	const [buttonContent, setButtonContent] = useState('Copy');
+	const changeButtonState = () => {
+		setButtonContent('Copied!');
+		setTimeout(() => {
+			setButtonContent('Copy');
+		}, 3_000);
+	};
+
+	const [healthColor, setHealthColor] = useState('#6B7280');
+	useEffect(() => {
+		const health = async () => {
+			const response = await fetch(`${process.env.NEXT_PUBLIC_MEILISEARCH_ADDRESS}/health`);
+			const json = (await response.json()) as { status: 'available' | 'unavailable' };
+			if (json.status === 'available') {
+				setHealthColor('#48BB78');
+			} else {
+				setHealthColor('#EF4444');
+			}
+		};
+
+		void health();
+	});
+
 	return (
 		<header id="serp">
 			<div className="inner-col">
 				<h2>search.crates.pm</h2>
+				<h4>Meilisearch-backed Crate searching</h4>
 				<p>
-					<h4>Meilisearch-backed Crate searching</h4>
 					<br />
 					This project is <a href="https://github.com/sycertech/search.crates.pm">open source</a>!
 					<br />
@@ -16,9 +40,31 @@ export const Header = observer(function Header({state$}: {state$: AppState}) {
 					<br />
 					<br />
 					Meilisearch endpoint:{' '}
-					<a href="https://crates.pm/api/meili/health">https://crates.pm/api/meili</a>
+					<span>
+						<span
+							style={{
+								backgroundColor: healthColor,
+								height: '0.5rem',
+								width: '0.5rem',
+								display: 'inline-block',
+								borderRadius: '9999px',
+								marginRight: '0.5rem',
+							}}
+						/>
+						<a href="https://crates.pm/api/meili/health">https://crates.pm/api/meili</a>
+					</span>
 					<br />
-					API Key: <code>42c23e43c9529fd1f1e47f4eb4d428b571f18e099d32091cc85b8546bb9d1be7</code>
+					API Key:{' '}
+					<button
+						type="submit"
+						style={{ cursor: 'grab' }}
+						onClick={async () => {
+							await navigator.clipboard.writeText(process.env.NEXT_PUBLIC_MEILISEARCH_API_KEY!);
+							changeButtonState();
+						}}
+					>
+						{buttonContent}
+					</button>
 					<br />
 					Please set an identifiable User-Agent header.
 					<br />
@@ -33,10 +79,10 @@ export const Header = observer(function Header({state$}: {state$: AppState}) {
 						autoCapitalize="off"
 						autoCorrect="off"
 						autoComplete="off"
-						tabIndex={1}
+						// tabIndex={1}
 						type="search"
 						id="textSearch"
-						onInput={event => performSearch(state$, event.currentTarget.value)}
+						onInput={async (event) => performSearch(state$, event.currentTarget.value)}
 					/>
 					<span id="request-time">{state$.requestTime.get()}</span>
 				</form>

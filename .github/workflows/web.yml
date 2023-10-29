@@ -1,0 +1,43 @@
+name: Website
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "web/**"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  build:
+    name: Build Website
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: web
+
+      - name: Setup Volta
+        uses: volta-cli/action@v3
+
+      - name: Install dependencies
+        uses: trufflehq/truffle-packages/actions/yarn@main
+
+      - name: Build website
+        env:
+          VERCEL_URL: ${{ vars.WEBSITE_URL }}
+        run: yarn build
+
+      - name: Bundle
+        run: cd out && tar -czvf ../web-$GITHUB_SHA.tar.gz .
+
+      - name: Releasing assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: web*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

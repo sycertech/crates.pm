@@ -1,13 +1,13 @@
-import {AppState} from '../App';
-import {fetchCrates} from './meili';
+'use client';
+import { fetchCrates } from './meili';
+import type { AppState } from './state';
 
-let abortController: AbortController | undefined = undefined;
+// todo: reimplement debounce
+// let abortController: AbortController | undefined;
 
 export const performSearch = async (state$: AppState, input: string) => {
 	try {
-		abortController = new AbortController();
-		const res = await fetchCrates(abortController!, input ?? '');
-		abortController = undefined;
+		const res = await fetchCrates(new AbortController()!, input ?? '');
 
 		if (res) {
 			state$.set({
@@ -16,10 +16,11 @@ export const performSearch = async (state$: AppState, input: string) => {
 				requestTime: `${res.processingTimeMs}ms`,
 			});
 		}
-	} catch (err: unknown) {
-		if (err instanceof DOMException && err.name === 'AbortError') {
+	} catch (error: unknown) {
+		if (error instanceof DOMException && error.name === 'AbortError') {
 			return;
 		}
-		throw err;
+
+		throw error;
 	}
 };
