@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "!web/**"
+    paths-ignore:
+      - "web/**"
   workflow_dispatch:
 
 env:

@@ -26,6 +26,8 @@ jobs:
 
       - name: Install dependencies
         uses: trufflehq/truffle-packages/actions/yarn@main
+        with:
+          working-directory: web
 
       - name: Build website
         env:
