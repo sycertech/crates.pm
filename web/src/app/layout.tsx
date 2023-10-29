@@ -1,4 +1,5 @@
 import './globals.css';
+import { URL } from 'node:url';
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
 import PlausibleProvider from 'next-plausible';
@@ -10,6 +11,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+	metadataBase: new URL(process.env.NEXT_PUBLIC_METADATA_BASE!),
 	title: 'crates.pm',
 	description: 'A search engine for Crates',
 	icons: {

@@ -38,8 +38,8 @@ jobs:
         run: cd out && tar -czvf ../web-$GITHUB_SHA.tar.gz .
 
       - name: Releasing assets
-        uses: softprops/action-gh-release@v1
+        uses: actions/upload-artifact@v3
         with:
-          files: web*.tar.gz
+          path: web*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
