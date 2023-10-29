@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          filter: web
+          sparse-checkout: web
 
       - name: Setup Volta
         uses: volta-cli/action@v3
