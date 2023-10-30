@@ -42,9 +42,17 @@ jobs:
       - name: Bundle
         run: cd out && tar -czvf ../web-$GITHUB_SHA.tar.gz .
 
-      - name: Releasing assets
-        uses: actions/upload-artifact@v3
+      - name: Upload to Seiten
+        uses: sycertech/seiten/action@main
         with:
-          path: web/web*.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          url: ${{ secrets.SEITEN_HOST }}
+          gpg-key: ${{ secrets.SEITEN_GPG_PRIVATE_KEY }}
+          archive: web-$GITHUB_SHA.tar.gz
+          path: crates.pm
+
+      # - name: Releasing assets
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     path: web/web*.tar.gz
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
