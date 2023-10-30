@@ -47,7 +47,7 @@ jobs:
         with:
           url: ${{ secrets.SEITEN_HOST }}
           gpg-key: ${{ secrets.SEITEN_GPG_PRIVATE_KEY }}
-          archive: web-$GITHUB_SHA.tar.gz
+          archive: web/web-$GITHUB_SHA.tar.gz
           path: crates.pm
 
       # - name: Releasing assets
